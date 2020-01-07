@@ -1,13 +1,16 @@
 const express = require('express');
-
+const postRouter = require('../posts/post-router')
 const db = require('../data/db-config.js');
+const userModel = require('./user-model')
 
 const router = express.Router();
+
+router.use("/:id/posts", postRouter)
 
 router.get('/', (req, res) => {
   db('users')
   .then(users => {
-    res.json(users);
+    res.json(await userModel.find());
   })
   .catch (err => {
     res.status(500).json({ message: 'Failed to get users' });
@@ -15,21 +18,18 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  const { id } = req.params;
-
-  db('users').where({ id })
-  .then(users => {
-    const user = users[0];
-
+  try {
+    const { id } = req.params;
+    const user = await userModel.findById(id);
+  
     if (user) {
       res.json(user);
     } else {
       res.status(404).json({ message: 'Could not find user with given id.' })
     }
-  })
-  .catch(err => {
-    res.status(500).json({ message: 'Failed to get user' });
-  });
+  } catch(err) {
+    next(err)
+  }
 });
 
 router.post('/', (req, res) => {
